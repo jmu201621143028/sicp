@@ -28,7 +28,7 @@ def type_tag(datum):
     return car(datum)
 
 
-def contens(datum):
+def contents(datum):
     return cdr(datum)
 
 
@@ -147,3 +147,68 @@ def div_complex(z1, z2):
         angle(z1) - angle(z2)
     )
 
+METHOD = dict()
+def put(op, obj, method):
+    METHOD[(op, obj)] = method
+
+def get(op, obj):
+    return METHOD[(op, obj)]
+
+
+def install_rectangular_package():
+    def real_part(z):
+        return car(z)
+
+    def imag_part(z):
+        return cdr(z)
+
+    def make_from_real_imag(x, y):
+        return cons(x, y)
+
+    def magnitude(z):
+        return math.sqrt(real_part(z) ** 2 + imag_part(z) ** 2)
+
+    def angle(z):
+        return math.atan(imag_part(z) / real_part(z))
+
+    def make_from_mag_ang(r, a):
+        return cons(r * math.cos(a), r * math.sin(a))
+
+    def tag(x):
+        return attach_tag("rectangular", x)
+
+    put('real_part', '(rectangular)', real_part)
+    put('imag_part', '(rectangular)', imag_part)
+    put('magnitude', '(rectangular)', magnitude)
+    put('angle', '(rectangular)', angle)
+    put('make_from_real_image', '(rectangular)', lambda x, y: tag(make_from_real_imag(x, y)))
+    put('make_from_mag_ang', '(rectangular)', lambda r, a: tag(make_from_mag_ang(r, a)))
+
+def install_polar_package():
+    def magnitude(z):
+        return car(z)
+    def angle(z):
+        return cdr(z)
+    def make_from_mag_ang(r, a):
+        return cons(r, a)
+    def real_part(z):
+        return magnitude(z) * math.cos(angle(z))
+    def imag_part(z):
+        return magnitude(z) * math.sin(angle(z))
+    def make_from_real_imag(x, y):
+        return cons(math.sqrt(x ** 2, y ** 2), math.atan(y / x))
+    def tag(x):
+        return attach_tag('polar', x)
+
+    put('real_part', '(polar)', real_part)
+    put('imag_part', '(polar)', imag_part)
+    put('magnitude', '(polar)', magnitude)
+    put('angle', '(polar)', angle)
+    put('make_from_real_image', '(polar)', lambda x, y: tag(make_from_real_imag(x, y)))
+    put('make_from_mag_ang', '(polar)', lambda r, a: tag(make_from_mag_ang(r, a)))
+
+def apply_generic(op, obj):
+    type_tags = type_tag(obj)
+    proc = get(op, type_tags)
+    return proc(contents(obj))
+    pass
